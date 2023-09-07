@@ -5,38 +5,39 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CleanArchitecture.Persistence.Repositories
 {
-    public class BaseRepository<T> : IBaseRepository<T> where T : BaseEntity
+    public abstract class BaseRepository<T> : IBaseRepository<T> where T : BaseEntity
     {
-        protected readonly AppDbContext _dbContext;
+        protected readonly AppDbContext DbContext;
 
-        public BaseRepository(AppDbContext dbContext)
+        protected readonly DbSet<T> DbSet; // propriedade que facilita a chamada se necessário
+
+        protected BaseRepository(AppDbContext dbContext)
         {
-            _dbContext = dbContext;
+            DbContext = dbContext;
+            DbSet = dbContext.Set<T>();
         }
 
-        public async Task<T> Get(Guid id, CancellationToken cancellationToken) => await _dbContext.Set<T>()
-                                                                                                  .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        public async Task<T> Get(Guid id, CancellationToken cancellationToken) => await DbSet.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
 
-        public async Task<List<T>> GetAll(CancellationToken cancellationToken) => await _dbContext.Set<T>()
-                                                                                                  .ToListAsync(cancellationToken);
+        public async Task<List<T>> GetAll(CancellationToken cancellationToken) => await DbSet.ToListAsync(cancellationToken);
 
         public void Create(T entity)
         {
             entity.DateCreated = DateTimeOffset.UtcNow;
-            _dbContext.Add(entity);
+            DbSet.Add(entity);
         }
 
         public void Update(T entity)
         {
             entity.DateUpdated = DateTimeOffset.UtcNow;
-            _dbContext.Update(entity);
+            DbSet.Update(entity);
         }
 
         public void Delete(T entity)
         {
             entity.DateDeleted = DateTimeOffset.UtcNow;
-            _dbContext.Remove(entity);
+            DbSet.Remove(entity);
         }
     }
 }
